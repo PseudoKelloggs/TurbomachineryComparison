@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import ctREFPROP.ctREFPROP as ct
-
 import signal
 from tqdm import tqdm
 import mysql.connector

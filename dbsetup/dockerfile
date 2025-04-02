@@ -1,0 +1,15 @@
+FROM mysql
+
+LABEL version="1.2"
+LABEL description="build mysql server image"
+
+ENV MYSQL_ROOT_PASSWORD password
+ENV MYSQL_DATABASE sCO2db
+ENV MYSQL_USER=cj
+ENV MYSQL_PASSWORD=1701
+# ADD database_restore/finance_stockprice.sql /docker-entrypoint-initdb.d
+# ADD database_restore/backup.sql /docker-entrypoint-initdb.d
+# ADD sampleData.sql /docker-entrypoint-initdb.d
+# ADD FullDataset.sql /docker-entrypoint-initdb.d
+
+EXPOSE 3306
