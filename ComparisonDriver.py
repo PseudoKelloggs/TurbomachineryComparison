@@ -3,6 +3,7 @@ import time
 import os
 
 #DOCKER NEEDS TO BE OPENED AND RUNNING 
+#Docker bat setup 
 def run_batch_file(batch_file_relative_path):
     full_path = os.path.abspath(batch_file_relative_path)
     quoted_path = f'"{full_path}"'  # wrap in quotes to handle spaces
@@ -21,8 +22,10 @@ def run_batch_file(batch_file_relative_path):
         print("Errors:\n", e.stderr)
         exit(1)
 
+#For Data Visualization (DataGrip), Connect the docker server here now
 def wait_for_user(message):
     input(f"{message}\nPress Enter when ready...")
+
 
 def run_python_script(script_name):
     try:
@@ -39,5 +42,8 @@ if __name__ == "__main__":
     # Step 2: Wait for user to connect DataGrip to Docker DB
     wait_for_user("Connect to the MySQL Docker container using DataGrip.")
 
-    # Step 3: Run TurboOutputFill to populate the DB with simulation outputs
+    # Step 3: Run TurboInputFill to populate the DB with simulation outputs
+    run_python_script("TurboInputFill.py")
+
+    # Step 4: Run TurboOutputFill to further populate DB
     run_python_script("TurboOutputFill.py")
