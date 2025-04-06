@@ -1,3 +1,4 @@
+"""
 import os
 import csv
 import sys
@@ -6,41 +7,57 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import ctREFPROP.ctREFPROP as ct
+"""
+
 import signal
 from tqdm import tqdm
 import mysql.connector
 import multiprocessing as mp
 import TURBOMACH_SIZING_091923 as TMS
-import TURBOMACH_DATA_012424 as TMD
+import Library.Turbomachine as TMD
 
+"""
+    DESCRIPTION
+    Defines ... ... ..
+    Only function Definitions, NO MAIN
+
+"""
 mydb = mysql.connector.connect(
   host="localhost",
-  user="cj",
+  user="user",
   password="1701",
   database="sCO2db"
 )
 
 impute_secondcon = "'Y'"
-componant = 'Comp'  #input('Input name of componant: ')
-table = f"`{componant}`"
 
-# Signal handler function
+"""
+    Signal Handler Functions
+    Ends program on Ctrl+C
+"""
 def sigint_handler(signum, frame):
     print("Received Ctrl+C. Stopping the program gracefully...")
     # Perform any cleanup tasks here
     # You can close database connections or save progress if needed
     mydb.close()
     sys.exit(0)  # Use sys.exit(0) to exit the program gracefully
-    
+
 # Set the signal handler for Ctrl+C (SIGINT)
 signal.signal(signal.SIGINT, sigint_handler)
 
-def getComponantInputs():
+"""
+Retrieves simulation input rows from the database for the given component 
+where `is.imputed` is marked as 'N'. This typically fetches rows that 
+have not yet been processed by the output fill logic.
+"""
+def getComponantInputs(component):
+    table = f"`{component}`"
+
     cursor = mydb.cursor()
     
     condition = "WHERE `is.imputed` = 'N'"
     
-    simulation_inputs = TMD.TURBOMACH_DATA[componant]['sim_in']
+    simulation_inputs = TMD.Turbomachine[component][component.getComponantInputs()]
     
     query = f"SELECT {simulation_inputs} FROM {table} {condition}"
     cursor.execute(query)
@@ -48,21 +65,26 @@ def getComponantInputs():
     cursor.close()
     return results
 
-def process_row(row):
+"""
+    Defines the variables by the type (Comp or Turb for now)
+
+"""
+def process_row(component,type,row):
     cursor = mydb.cursor()
-    
-    if componant == 'Turb':
+    table = f"`{component}`"
+
+    if type == 'Turb':
         ID,isimputed,FLUID_type,FLUID_z,mdot,FLUID_Plow,FLUID_Phigh,eta_turb,T_in,RPM = row
         [output_values] = TMS.TURBOMACH_TURB(FLUID_type,[FLUID_z],mdot,FLUID_Plow,FLUID_Phigh,eta_turb,T_in,RPM)
-    elif componant == 'Comp':
+    elif type == 'Comp':
         ID,isimputed,FLUID_type,FLUID_z,mdot,FLUID_Plow,FLUID_Phigh,eta_comp,T_in,RPM = row
         [output_values] = TMS.TURBOMACH_COMP(FLUID_type,[FLUID_z],mdot,FLUID_Plow,FLUID_Phigh,eta_comp,T_in,RPM)
     else:
-        raise KeyError(f"Cycle name {componant} not found in ARC_DATA.")
-    
+        raise KeyError(f"Cycle name {type} not found in ARC_DATA.")
+
     # Construct the update query
-    simulation_ouputs = TMD.TURBOMACH_DATA[componant]['sim_out']
-    update_query = f"UPDATE {table} SET {simulation_ouputs}, `is.imputed` = {impute_secondcon} WHERE id = {ID}"
+    simulation_outputs = component.get_sim_output_fields()
+    update_query = f"UPDATE {table} SET {simulation_outputs}, `is.imputed` = {impute_secondcon}"
     
     # Execute the update query
     cursor.execute(update_query, list(output_values))
@@ -73,7 +95,9 @@ def process_row(row):
     # close the cursor    
     cursor.close()
 
-# Function to calculate and display a progress bar
+    """
+        Function to Calc and Display a Progress bar
+    """
 def display_progress_bar(completed, total):
     progress = completed / total
     bar_length = 30
@@ -81,20 +105,21 @@ def display_progress_bar(completed, total):
     text = f"[{'#' * block}{'-' * (bar_length - block)}] {progress * 100:.2f}%"
     return text
 
-# The main function to parallelize the processing
-def main():
+
+
+def run_Output(component,type):
     pool = mp.Pool(processes=mp.cpu_count())  # Use the available CPU cores
 
     start_time = time.time()
     
-    ComponantInputs = getComponantInputs()
+    ComponantInputs = getComponantInputs(component)
 
     total_simulations = len(ComponantInputs)
     completed_simulations = 0
 
     # Create a tqdm progress bar
     with tqdm(total=total_simulations, desc="Processing", ascii=True, dynamic_ncols=True) as pbar:  # Set ascii=True to avoid special characters
-        for _ in pool.imap_unordered(process_row, ComponantInputs):
+        for _ in pool.imap_unordered(process_row(component,type), ComponantInputs):
             completed_simulations += 1
             pbar.update(1)  # Update the progress bar
 
@@ -115,6 +140,3 @@ def main():
 
     # Close the database connection
     mydb.close()
-
-if __name__ == "__main__":
-    main()

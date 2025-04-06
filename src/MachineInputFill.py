@@ -1,24 +1,34 @@
 import numpy as np
 import mysql.connector
-import DataFunctions as DF
-import TURBOMACH_DATA_012424 as TMD
+import Library.DataFunctions as DF
+import Library.Turbomachine as TMD
 
+"""
+    Setup The Database
+    Defines Fill Inputs, CreateTable
+    Only function Definitions, NO MAIN
+"""
 mydb = mysql.connector.connect(
   host="localhost",
-  user="cj",
+  user="user",
   password="1701",
   database="sCO2db",
   auth_plugin="mysql_native_password"
 )
 
-def CreateTable(componant):
-  if componant in TMD.TURBOMACH_DATA:
-    tm_specs = TMD.TURBOMACH_DATA[componant]['specs']
-    db_features = TMD.TURBOMACH_DATA[componant]['DB_features']
+"""
+    Creates Tables (SQL) from Turbomachinery Object
+    Pass in specific Turbomachinery for comparison
+    Raise keyError: Debugging - refrences global TURBOMACHINE_REGISTRY Array for code
+"""
+def CreateTable(component):
+  if component in TMD.TURBOMACH_DATA:
+    tm_specs = TMD.TURBOMACH_DATA[component]['specs']
+    db_features = TMD.TURBOMACH_DATA[component]['DB_features']
     print("\nTurbomachine Specs: ", tm_specs)
     print("\nDatabase Features: ", db_features)
   else:
-    raise KeyError(f"Cycle name {componant} not found in TURBOMACH_DATA")
+    raise KeyError(f"Turbomachinery code name {component} not found in Global Registry")
   
   # Base columns for the SQL table
   base_columns = "id INT AUTO_INCREMENT PRIMARY KEY, `is.imputed` VARCHAR(255), "
@@ -27,14 +37,19 @@ def CreateTable(componant):
   sql_query = f"CREATE TABLE {{table}} ({base_columns}{db_features})"
   
   cursor = mydb.cursor()
-  cursor.execute(sql_query.format(table=componant))
+  cursor.execute(sql_query.format(table=component))
 
-def FillInputs(componant,n):
-  if componant in TMD.TURBOMACH_DATA:
-    var_bounds = TMD.TURBOMACH_DATA[componant]['Var_bounds']
+"""
+    Fills Inputs with Variable Boundaries
+    Component = Turbomachiner ; n = number of samples created
+    POSSIBLE ERROR: TMD.Turbomachinery[component][var_bounds]
+"""
+def FillInputs(component,n):
+  if component in TMD.Turbomachine:
+    var_bounds = TMD.Turbomachine[component][var_bounds]
     print("\nVariable Bounds: ", var_bounds)
   else:
-    raise KeyError(f"Cycle name {componant} not found in TURBOMACH_DATA")
+    raise KeyError(f"Turbomachinery code name {component} not found in Global Registry")
   
   input_data = DF.lhs(var_bounds,n)
   
@@ -42,7 +57,7 @@ def FillInputs(componant,n):
   
   #inital part of sql columns
   sql_columns = "`is.imputed`, `FLUID.type`, `FLUID.Phigh`, `FLUID.z`, `FLUID.mdot`, `FLUID.PRatio`, `FLUID.Plow`, "
-  sql_columns += "`eta.turb`" if componant == 'Turb' else "`eta.comp`"
+  sql_columns += TMD.Turbomachine[component][var_bounds]
   sql_columns += " , `FLUID.Tin`,`RPM`"
   
   # Count the number of features by splitting the string by ','
@@ -51,7 +66,7 @@ def FillInputs(componant,n):
   # Generate the corresponding number of '%s' placeholders
   placeholders = ", ".join(["%s"] * num_features)
     
-  sql = f"INSERT INTO {componant} ({sql_columns}) VALUES ({placeholders})"
+  sql = f"INSERT INTO {component} ({sql_columns}) VALUES ({placeholders})"
   
   # Looping through the data
   for row in input_data:
@@ -63,22 +78,4 @@ def FillInputs(componant,n):
     # Execute the SQL command
     cursor.execute(sql,values_list)
     mydb.commit()
-    
-    # Print the result
-    #print(cursor.rowcount, "data inserted for", componant, "with CO2")
-
-def main():
-  componant = 'Turb'
-  
-  CreateTable(componant)
-  print("Table created successfully.")
-  
-  n = 800
-  FillInputs(componant,n)
-  print("Inputs successfully filled")
-  
-  # Close the database connection
-  mydb.close()
-  
-if __name__ == "__main__":
-  main()
+ 
