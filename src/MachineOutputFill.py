@@ -1,20 +1,19 @@
 """
 import os
 import csv
-import sys
-import time
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import ctREFPROP.ctREFPROP as ct
 """
-
+import sys
+import time
 import signal
 from tqdm import tqdm
 import mysql.connector
 import multiprocessing as mp
-import TURBOMACH_SIZING_091923 as TMS
-import Library.Turbomachine as TMD
+import Library.TurboSizing as TMS
+import Library.TurboData as TMD
 
 """
     DESCRIPTION

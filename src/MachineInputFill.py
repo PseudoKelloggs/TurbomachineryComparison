@@ -1,7 +1,7 @@
 import numpy as np
 import mysql.connector
 import Library.DataFunctions as DF
-import Library.Turbomachine as TMD
+import Library.TurboData as TMD
 
 """
     Setup The Database
