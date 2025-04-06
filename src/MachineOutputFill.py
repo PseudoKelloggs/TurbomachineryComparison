@@ -12,7 +12,7 @@ import signal
 from tqdm import tqdm
 import mysql.connector
 import multiprocessing as mp
-import Library.TurboSizing as TMS
+#import Library.TurboSizing as TMS
 import Library.TurboData as TMD
 
 """

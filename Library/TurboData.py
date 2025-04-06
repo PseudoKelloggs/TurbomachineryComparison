@@ -18,10 +18,10 @@ class Turbomachine:
         '`mass.turb` = %s, `mass.comp` = %s, `W.turb` = %s, `W.comp` = %s'
     )
 
-    def __init__(self, name, code, var_bounds):
+    def __init__(self, name, code, type, var_bounds):
         self.specs = {
             'Name': name,
-            'code': code
+            'code': code,
         }
         self.var_bounds = var_bounds
 

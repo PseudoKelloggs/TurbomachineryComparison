@@ -1,9 +1,10 @@
 import subprocess
 import time
+import socket
 import os
 import Library.TurboData as TMD
-import MachineInputFill as MIF
-import MachineOutputFill as MOF
+from src import MachineInputFill as MIF
+#from src import MachineOutputFill as MOF
 
 #DOCKER NEEDS TO BE OPENED AND RUNNING 
 #Docker bat setup 
@@ -39,17 +40,17 @@ def run_python_script(script_name):
         exit(1)
 
 if __name__ == "__main__":
+   
     # Step 1: Start the MySQL database using the batch file
-    run_batch_file("dbsetup/startupTestDB.bat")
+    run_batch_file("dbsetup/startupDB.bat")
 
     # Step 2: Wait for user to connect DataGrip to Docker DB
     wait_for_user("Connect to the MySQL Docker container using DataGrip.")
 
     #Define Component
-    axialTurbine = TMD(
+    axialTurbine = TMD.Turbomachine(
         name = 'Axial Turbine',
         code = 'AxTurb',
-        type = 'Turb',
         var_bounds=[
             (0.85, 1),
             (2, 18),
@@ -69,11 +70,12 @@ if __name__ == "__main__":
     MIF.CreateTable(axialTurbine)
     print("Table Created Successfully")
 
-    MIF.FillInputs(axialTurbine,n)
-    print("Inputs Successfully Filled")
-
+    MIF.FillInputs(axialTurbine, 50)
+    print("Tables Filled Correctly")
+ 
+    
     MIF.mydb.close()
 
 
     # Step 4: Run TurboOutputFill to further populate DB
-    MOF.run_Output(axialTurbine,'Turb')
+    #MOF.run_Output(axialTurbine,'Turb')
