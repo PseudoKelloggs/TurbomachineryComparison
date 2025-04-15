@@ -81,7 +81,7 @@ if __name__ == "__main__":
         name = 'Radial Turbine',
         code = 'RadTurb',
         var_bounds=[
-        (0.85, 1),      # FLUID.z (Fluid Mix Ratio)
+        (1, 1),      # FLUID.z (Fluid Mix Ratio)
         (1, 20),        # FLUID.mdot (Mass Flow Rate [kg/s])
         (2, 20),     # FLUID.PRatio (Pressure Ratio)
         (.05, 5),     # FLUID.Plow (Low Pressure [MPa])

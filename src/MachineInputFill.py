@@ -56,11 +56,6 @@ def FillInputs(component, n):
     for row in input_data:
         Phigh = row[2] * row[3]
         values = ['N', 'CO2', Phigh] + row.tolist()
-        print("\n--- SQL DEBUG ---", flush=True)
-        print(f"sql_columns:\n{sql_columns}", flush=True)
-        print(f"placeholders:\n{placeholders}", flush=True)
-        print(f"# of placeholders: {placeholders.count('%s')}", flush=True)
-        print(f"values ({len(values)}):\n{values}", flush=True)
         cursor.execute(sql, values)
         mydb.commit()
  
